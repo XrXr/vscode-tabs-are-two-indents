@@ -1,78 +1,57 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+// SPDX-License-Identifier: MIT
+//
+// This extension is based on vscode-stretchy-spaces by Kyle Paulsen
+// which is also licensed under MIT. See: https://github.com/kylepaulsen/vscode-stretchy-spaces
 const vscode = require('vscode');
-// this method is called when vs code is activated
-function activate(context) {
-    // Create a decorator types that we use to decorate indent levels
+
+exports.activate = function activate(context) {
+    // States updated by callbacks
     let timeout = null;
     let enabled = true;
-    let currentLanguageId = null;
     let activeEditor = vscode.window.activeTextEditor;
-
     let currentIndentDecorationType;
 
-    if (activeEditor && checkLanguage()) {
+    if (activeEditor && checkLanguage(activeEditor)) {
         triggerUpdateDecorations();
     }
 
-    vscode.window.onDidChangeTextEditorOptions(function(event) {
-        const options = event.options;
-        const indentChange = options && (options.insertSpaces !== undefined || options.tabSize !== undefined);
-        if (indentChange && checkLanguage()) {
-            clearDecorations();
-            triggerUpdateDecorations();
-        }
-    }, null, context.subscriptions);
-
-    vscode.window.onDidChangeActiveTextEditor(function(editor) {
+    vscode.window.onDidChangeActiveTextEditor(editor => {
         activeEditor = editor;
-        if (editor && checkLanguage()) {
+        if (editor && checkLanguage(editor)) {
             clearDecorations();
             triggerUpdateDecorations();
         }
     }, null, context.subscriptions);
 
-    vscode.workspace.onDidChangeTextDocument(function(event) {
-        if (activeEditor && event.document === activeEditor.document && checkLanguage()) {
+    vscode.workspace.onDidChangeTextDocument(event => {
+        if (activeEditor && event.document === activeEditor.document && checkLanguage(activeEditor)) {
             triggerUpdateDecorations();
         }
     }, null, context.subscriptions);
 
-    vscode.commands.registerCommand('stretchySpaces.disable', () => {
+    vscode.commands.registerCommand('tabsAreTwoIndents.disable', () => {
         if (enabled) {
             enabled = false;
             clearDecorations();
         }
     });
 
-    vscode.commands.registerCommand('stretchySpaces.enable', () => {
+    vscode.commands.registerCommand('tabsAreTwoIndents.enable', () => {
         if (!enabled) {
             enabled = true;
-            if (activeEditor && checkLanguage()) {
+            if (activeEditor && checkLanguage(activeEditor)) {
                 triggerUpdateDecorations();
             }
         }
     });
 
-    function checkLanguage() {
-        if (activeEditor) {
-            if (currentLanguageId !== activeEditor.document.languageId) {
-                const inclang = vscode.workspace.getConfiguration('stretchySpaces').includedLanguages || [];
-                const exclang = vscode.workspace.getConfiguration('stretchySpaces').excludedLanguages || [];
-                currentLanguageId = activeEditor.document.languageId;
-                if (inclang.length !== 0) {
-                    if (inclang.indexOf(currentLanguageId) === -1) {
-                        return false;
-                    }
-                }
-                if (exclang.length !== 0) {
-                    if (exclang.indexOf(currentLanguageId) !== -1) {
-                        return false;
-                    }
-                }
-            }
+    function checkLanguage(editor) {
+        const doc_lang = editor.document.languageId;
+        const inc_lang = vscode.workspace.getConfiguration('tabsAreTwoIndents').includedLanguages || [];
+        if (inc_lang.includes(doc_lang)) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     function clearDecorations() {
@@ -83,56 +62,39 @@ function activate(context) {
     }
 
     function triggerUpdateDecorations() {
-        if (!enabled) {
-            return;
-        }
-        if (timeout) {
-            clearTimeout(timeout);
-        }
-        const updateDelay = vscode.workspace.getConfiguration('stretchySpaces').updateDelay || 100;
+        if (!enabled) return;
+
+        if (timeout) clearTimeout(timeout);
+
+        const updateDelay = vscode.workspace.getConfiguration('tabsAreTwoIndents').updateDelay || 30;
         timeout = setTimeout(updateDecorations, updateDelay);
     }
 
     function updateDecorations() {
-        if (!activeEditor || !enabled) {
-            return;
-        }
-        const targetIndentation = vscode.workspace.getConfiguration('stretchySpaces').targetIndentation;
-        if (!activeEditor.options.insertSpaces || targetIndentation === activeEditor.options.tabSize) {
-            return;
-        }
-        const decorationRanges = [];
-        let regEx;
-        if (vscode.workspace.getConfiguration('stretchySpaces').alignAsterisks) {
-             // Spaces from the start of the line until before the space before a *,
-             // to preserve JSDoc-style comments alignment
-            regEx = /^ +(?!\*)/gm;
-        } else {
-            regEx = /^ +/gm;
-        }
-        const text = activeEditor.document.getText();
+        if (!activeEditor || !enabled) return;
 
         if (!currentIndentDecorationType) {
-            // 4 spaces rendered as 2, or 50% less: -0.5ch
-            // 2 spaces rendered as 4, or 100% more: 1ch
-            // current + percentChange × current = target
-            const percentChange = (targetIndentation - activeEditor.options.tabSize) / activeEditor.options.tabSize;
             currentIndentDecorationType = vscode.window.createTextEditorDecorationType({
-                letterSpacing: percentChange + 'ch' // https://css-tricks.com/the-lengths-of-css/#ch
+                // The `ch` CSS unit is based on the width of the character of 0
+                // in the font. This effectively doubles the size of the rendered size
+                // of each targeted tab chracter.
+                // See: https://css-tricks.com/the-lengths-of-css/#ch
+                letterSpacing: '1ch'
             });
         }
 
+        // Run a regex through the whole document. Sure hope the file is small!
+        const decorationRanges = [];
+        const regEx = /^\t+/gm; // spaces before tabs are generally regarded as errors
+        const text = activeEditor.document.getText();
         let match;
-
         while (match = regEx.exec(text)) {
             const matchText = match[0];
             const matchLength = matchText.length;
             const startPos = activeEditor.document.positionAt(match.index);
             const endPos = activeEditor.document.positionAt(match.index + matchLength);
-            decorationRanges.push({ range: new vscode.Range(startPos, endPos), hoverMessage: null });
+            decorationRanges.push({ range: new vscode.Range(startPos, endPos) });
         }
         activeEditor.setDecorations(currentIndentDecorationType, decorationRanges);
     }
 }
-
-exports.activate = activate;

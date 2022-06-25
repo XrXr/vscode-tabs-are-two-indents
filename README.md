@@ -1,59 +1,53 @@
-# Stretchy Spaces
+# Tabs are Two Indents
 
-Allows you to change how wide your indentation spaces are.
+A tab character means two indentation levels in some codebases;
+have Visual Studio Codde render it as such.
 
-![Example](https://raw.githubusercontent.com/kylepaulsen/vscode-stretchy-spaces/master/pic.png)
+![Demo](demo.png)
 
-## Features
+## Why?
 
-Do you hate your project's indentation level and have a hard time reading your code? Then just
-stretch it to be what you want! You can expand or contract your indentation using this extension.
+As of June 2022, the notion of indentation size is coupled with tab width in
+Visual Studio Code. Without any extensions, it's not possible to indent by 4
+spaces but have tab characters render as wide as 8 spaces, for example.
 
-Note: This only works on files that are indented using spaces. If a file is indented using tabs, vscode can already change your tab size! It's built into the editor!
+There are many codebases where a tab character should render as two levels
+of indentation. The following are some examples:
 
-## Configuration
+- [GCC](https://github.com/gcc-mirror/gcc/blob/113844d68e94f4e9c0e946db351ba7d3d4a1335a/libgfortran/intrinsics/c99_functions.c#L1890)
+- [Ruby](https://github.com/ruby/ruby/blob/b1173ba6d34d5efbd2463424de8dae51b9ab7d73/ruby.c#L387)
+- [Vim](https://github.com/vim/vim/blob/4e0fc8956649d3208aeaa1642c5efc44e385d77a/src/ui.c#L90)
+- [Emacs](https://github.com/emacs-mirror/emacs/blob/b6238a26c97341cf2c34c12cf25c580f64d06a78/src/eval.c#L561)
 
-Although you can just use it as it is there is the possibility to configure some aspects of the extension:
+There are [two][old] long-standing open features [requests][new] to separate
+indentation size from tab size, but there is no native support in the editor as of yet.
 
-```
-  // How many spaces do you wish the indentation was? The extension will *try* to match this.
-  "stretchySpaces.targetIndentation": 4
+## Limitations
 
-  // For which languages Stretchy Spaces should be activated (if empty it means all).
-  "stretchySpaces.includedLanguages": [] // for example ["nim", "nims", "python"]
+Indent guides can be missing. While this extension makes the editor render
+tab indents at the desired width, it does not teach Code that one tab is two levels
+of indentation which require two levels of indent guides. You have the
+option to disable the guides by setting the following:
 
-  // For which languages Stretchy Spaces should be deactivated (if empty it means none).
-  "stretchySpaces.excludedLanguages": [] // for example ["plaintext"]
-
-  // Try to align asterisks in the same column to preserve JSDoc-style comment alignment.
-  "stretchySpaces.alignAsterisks": true
-
-  // The delay in ms until the editor gets updated.
-  "stretchySpaces.updateDelay": 100 // 10 makes it super fast but may cost more resources
-```
-
-*Notice: Adding the same language to both `includedLanguages` and `excludedLanguages` does not make much sense. Use one or the other, not both!*
-
-## Commands
-
-Get to the Command Palette and then you can run:
-
-`Stretchy Spaces: Disable` - to disable the extension within the current running vscode instance.
-
-`Stretchy Spaces: Enable` - to enable the extension within the current running vscode instance.
-
-## Guides
-
-If you have indent guides enabled, they will still appear at the unadjusted locations. Either disable them:
-
-```js
+```json
 "editor.renderIndentGuides": false
 ```
 
-Or install the [Guides](https://marketplace.visualstudio.com/itemdetails?itemName=spywhere.guides) extension to replace them with ones that are compatible with this extension.
+Additionally, this extension does not change the width of tabs that are in the
+middle of a line. The rendered width of a tab is fluid and depends on the
+placement of the character within a tab stop. The editor itself is in the
+best position to calculate the correct width.
 
-## Other Info
+There are additional extensions available to work around these issues, but
+it would be better if Code could natively treat the tab size and indentation
+size as separate.
 
-This extension borrows code from the [Indent Rainbow](https://github.com/oderwat/vscode-indent-rainbow) extension, which I highly recommend!
+Maybe leaving comments in the [feature][old] [requests][new] could make
+the maintainers care more about this usecase?
 
-Licensed under MIT
+## Configuration
+
+Take a look at [package.json] to see available settings and commands.
+
+[old]: https://github.com/microsoft/vscode/issues/5394
+[new]: https://github.com/microsoft/vscode/issues/42740
