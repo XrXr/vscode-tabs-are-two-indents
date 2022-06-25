@@ -1,8 +1,8 @@
 {
     "name": "tabs-are-two-indents",
     "displayName": "Tabs are Two Indents",
-    "description": "Render tabs as wide as two levels of indentation. Can be handy for codebases that mix tabs and spaces.",
-    "version": "0.0.1",
+    "description": "Render tabs as wide as two levels of indentation. This can be handy for codebases that mix tabs and spaces.",
+    "version": "0.0.2",
     "publisher": "XrXr",
     "author": {
         "name": "Alan Wu"
