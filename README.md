@@ -3,7 +3,7 @@
 A tab character means two indentation levels in some codebases;
 have Visual Studio Codde render it as such.
 
-![Demo](demo.png)
+![Demo](https://github.com/XrXr/vscode-tabs-are-two-indents/raw/d24c4c6996d5267c23cd312035bf79e7e428ef9b/demo.png)
 
 ## Why?
 
@@ -49,5 +49,6 @@ the maintainers care more about this usecase?
 
 Take a look at [package.json] to see available settings and commands.
 
+[package.json]: https://github.com/XrXr/vscode-tabs-are-two-indents/blob/d24c4c6996d5267c23cd312035bf79e7e428ef9b/package.json
 [old]: https://github.com/microsoft/vscode/issues/5394
 [new]: https://github.com/microsoft/vscode/issues/42740
